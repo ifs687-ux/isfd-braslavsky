@@ -3,5 +3,6 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/isfd-braslavsky/', // ← necesario para GitHub Pages
+  // MUY IMPORTANTE: el nombre EXACTO del repo, con slashes
+  base: '/isfd-braslavsky/',
 })
