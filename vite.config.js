@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/isfd-braslavsky/',   // 👈 nombre EXACTO del repo
+  base: '/isfd-braslavsky/',   // nombre EXACTO del repo
 })
