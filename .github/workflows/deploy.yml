@@ -1,5 +1,4 @@
 name: GH Pages (Vite → gh-pages)
-
 on:
   push:
     branches: [ "main" ]
