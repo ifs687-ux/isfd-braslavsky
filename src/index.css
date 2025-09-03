@@ -1,3 +1,6 @@
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; }
-body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* opcional: ajustes suaves */
+body { @apply bg-gray-50 text-gray-900; }
