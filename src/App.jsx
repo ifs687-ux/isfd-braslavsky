@@ -736,7 +736,7 @@ function LoginModal({ onClose, onOk }) {
 }
 
 // --------------------- App ---------------------
-export default function App() {
+export default function App()  { return <div>Hola</div> }
   const [data, setData] = useLocalStorage(STORAGE_KEY, DEFAULT_DATA);
   const [route, setRoute] = useState("inicio");
   const [admin, setAdmin] = useState(() => localStorage.getItem(ADMIN_KEY) === "1");
