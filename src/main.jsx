@@ -1,9 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
-// Si NO tenés estilos, dejá comentado esto:
-// import './index.css'
-import './index.css'
+import './index.css' // si lo tenés
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
