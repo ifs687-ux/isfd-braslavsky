@@ -13,10 +13,9 @@ import 'react-quill/dist/quill.snow.css'
  */
 
 // --------------------- Ayudantes ---------------------
-constante CLAVE_DE_ALMACENAMIENTO = "isfd_braslavsky_site_v4";
-constante ADMIN_KEY = "isfd_braslavsky_admin";
-
-constante uid = () =>
+const CLAVE_DE_ALMACENAMIENTO = "isfd_braslavsky_site_v4";
+const ADMIN_KEY = "isfd_braslavsky_admin";
+const uid = () =>
   (globalThis.crypto?.randomUUID?.() ?? `${Math.random().toString(36).slice(2)}${Date.now()}`);
 
 función useLocalStorage(clave, valorinicial) {
