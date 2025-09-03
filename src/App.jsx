@@ -1,6 +1,10 @@
 import React, { useState } from 'react'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+
 /**
  * ISFD Cecilia Braslavsky — Sitio institucional (versión estable)
  * ---------------------------------------------------------------
@@ -12,87 +16,88 @@ import 'react-quill/dist/quill.snow.css'
  * ✔ Botón Compartir (Web Share o copia al portapapeles)
  */
 
-// --------------------- Ayudantes ---------------------
-const CLAVE_DE_ALMACENAMIENTO = "isfd_braslavsky_site_v4";
+// --------------------- Helpers ---------------------
+const STORAGE_KEY = "isfd_braslavsky_site_v4";
 const ADMIN_KEY = "isfd_braslavsky_admin";
+
 const uid = () =>
   (globalThis.crypto?.randomUUID?.() ?? `${Math.random().toString(36).slice(2)}${Date.now()}`);
 
-función useLocalStorage(clave, valorinicial) {
-  const [estado, establecerEstado] = usarEstado(() => {
-    intentar {
-      const raw = localStorage.getItem(clave);
-      devuelve sin procesar? JSON.parse(raw): valorInicial;
-    } atrapar {
-      devolver valorInicial;
+function useLocalStorage(key, initialValue) {
+  const [state, setState] = useState(() => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : initialValue;
+    } catch {
+      return initialValue;
     }
   });
-  usarEfecto(() => {
-    intentar {
-      localStorage.setItem(clave, JSON.stringify(estado));
-    } atrapar {}
-  }, [clave, estado]);
-  devolver [estado, establecerEstado];
+  useEffect(() => {
+    try {
+      localStorage.setItem(key, JSON.stringify(state));
+    } catch {}
+  }, [key, state]);
+  return [state, setState];
 }
 
-función classNames(...xs) {
-  devolver xs.filter(Boolean).join(" ");
+function classNames(...xs) {
+  return xs.filter(Boolean).join(" ");
 }
 
-función encodeForUrl(obj) {
-  intentar {
-    constante json = JSON.stringify(obj);
-    constante uri = encodeURIComponent(json);
-    devuelve btoa(uri);
-  } atrapar {
-    devolver "";
+function encodeForUrl(obj) {
+  try {
+    const json = JSON.stringify(obj);
+    const uri = encodeURIComponent(json);
+    return btoa(uri);
+  } catch {
+    return "";
   }
 }
-función decodeFromUrlParam(str) {
-  intentar {
-    constante uri = atob(str);
-    constante json = decodeURIComponent(uri);
-    devuelve JSON.parse(json);
-  } atrapar {
-    devuelve nulo;
+function decodeFromUrlParam(str) {
+  try {
+    const uri = atob(str);
+    const json = decodeURIComponent(uri);
+    return JSON.parse(json);
+  } catch {
+    return null;
   }
 }
-función makeShareUrl(stateObj) {
-  const base = ventana.ubicación.origen + ventana.ubicación.ruta;
-  constante datos = encodeForUrl(estadoObj);
-  devuelve `${base}?data=${data}`;
+function makeShareUrl(stateObj) {
+  const base = window.location.origin + window.location.pathname;
+  const data = encodeForUrl(stateObj);
+  return `${base}?data=${data}`;
 }
 
 // --------------------- Datos por defecto ---------------------
-constante DATOS_PREDETERMINADOS = {
-  Institución: {
+const DEFAULT_DATA = {
+  institucion: {
     nombre: "ISFD Cecilia Braslavsky",
     lema: "Formación docente con sentido y calidad",
     contacto: {
-      correo electrónico: "isfd.cecilia.braslavsky@gmail.com",
-      dirección: "Aristóbulo del Valle, Misiones, Argentina",
+      email: "isfd.cecilia.braslavsky@gmail.com",
+      direccion: "Aristóbulo del Valle, Misiones, Argentina",
     },
   },
-  diapositivas: [
+  slides: [
     {
-      identificación: uid(),
-      título: "Bienvenidos al ISFD Cecilia Braslavsky",
+      id: uid(),
+      titulo: "Bienvenidos al ISFD Cecilia Braslavsky",
       texto:
         "Un espacio de formación docente comprometido con la comunidad, la innovación y la calidad educativa.",
       imagen:
         "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1600&q=80&auto=format&fit=crop",
     },
     {
-      identificación: uid(),
-      título: "Prácticas en territorio",
+      id: uid(),
+      titulo: "Prácticas en territorio",
       texto:
         "Articulación con escuelas de la región, proyectos interdisciplinarios y aprendizaje situado.",
       imagen:
         "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1600&q=80&auto=format&fit=crop",
     },
     {
-      identificación: uid(),
-      título: "Formación continua",
+      id: uid(),
+      titulo: "Formación continua",
       texto:
         "Trayectos de actualización y pos-títulos para fortalecer la profesión docente.",
       imagen:
@@ -101,10 +106,10 @@ constante DATOS_PREDETERMINADOS = {
   ],
   carreras: [
     {
-      identificación: uid(),
+      id: uid(),
       nombre: "Profesorado de Matemática",
-      color: "del índigo 500 al cielo 500",
-      DescripciónHTML:
+      color: "from-indigo-500 to-sky-500",
+      descripcionHtml:
         "<p>Formación sólida en contenidos matemáticos, didáctica específica y uso de tecnologías digitales.</p>",
       materiasHtml:
         "<ul><li>Álgebra I</li><li>Análisis I</li><li>Geometría</li><li>Probabilidad y Estadística</li><li>Didáctica de la Matemática</li><li>Prácticas I–IV</li></ul>",
@@ -112,10 +117,10 @@ constante DATOS_PREDETERMINADOS = {
         "https://images.unsplash.com/photo-1529101091764-c3526daf38fe?w=1600&q=80&auto=format&fit=crop",
     },
     {
-      identificación: uid(),
+      id: uid(),
       nombre: "Profesorado de Biología",
-      color: "de esmeralda 500 a verde azulado 500",
-      DescripciónHTML:
+      color: "from-emerald-500 to-teal-500",
+      descripcionHtml:
         "<p>Enfoque en ciencias biológicas, educación ambiental y trabajo en laboratorio y campo.</p>",
       materiasHtml:
         "<ul><li>Biología General</li><li>Genética</li><li>Ecología</li><li>Microbiología</li><li>Didáctica de la Biología</li><li>Prácticas I–IV</li></ul>",
@@ -123,10 +128,10 @@ constante DATOS_PREDETERMINADOS = {
         "https://images.unsplash.com/photo-1559757175-08c6d5c9cde7?w=1600&q=80&auto=format&fit=crop",
     },
     {
-      identificación: uid(),
+      id: uid(),
       nombre: "Profesorado de Educación Física",
-      color: "de-naranja-500 a-amarillo-500",
-      DescripciónHTML:
+      color: "from-orange-500 to-yellow-500",
+      descripcionHtml:
         "<p>Formación integral en movimiento, salud, deportes y didáctica de la educación física.</p>",
       materiasHtml:
         "<ul><li>Anatomía</li><li>Fisiología</li><li>Juegos y Deportes</li><li>Didáctica de la EF</li><li>Prácticas I–IV</li></ul>",
@@ -134,10 +139,10 @@ constante DATOS_PREDETERMINADOS = {
         "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1600&q=80&auto=format&fit=crop",
     },
     {
-      identificación: uid(),
+      id: uid(),
       nombre: "Profesorado de Historia",
-      color: "de-rosa-500 a-fucsia-500",
-      DescripciónHTML:
+      color: "from-rose-500 to-fuchsia-500",
+      descripcionHtml:
         "<p>Historia local, regional y mundial con enfoque crítico y construcción de ciudadanía.</p>",
       materiasHtml:
         "<ul><li>Historia Argentina</li><li>Historia Universal</li><li>Metodología</li><li>Didáctica de la Historia</li><li>Prácticas I–IV</li></ul>",
@@ -145,10 +150,10 @@ constante DATOS_PREDETERMINADOS = {
         "https://images.unsplash.com/photo-1457694587812-e8bf29a43845?w=1600&q=80&auto=format&fit=crop",
     },
     {
-      identificación: uid(),
+      id: uid(),
       nombre: "Profesorado de Lengua y Literatura",
-      color: "de morado-500 a violeta-500",
-      DescripciónHTML:
+      color: "from-purple-500 to-violet-500",
+      descripcionHtml:
         "<p>Estudios literarios, lingüística y didáctica de la lengua con integración de medios digitales.</p>",
       materiasHtml:
         "<ul><li>Gramática</li><li>Literatura Argentina</li><li>Literatura Latinoamericana</li><li>Didáctica de la Lengua</li><li>Prácticas I–IV</li></ul>",
@@ -156,10 +161,10 @@ constante DATOS_PREDETERMINADOS = {
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1600&q=80&auto=format&fit=crop",
     },
     {
-      identificación: uid(),
+      id: uid(),
       nombre: "Profesorado de Educación Especial",
-      color: "de cian-500 a azul-500",
-      DescripciónHTML:
+      color: "from-cyan-500 to-blue-500",
+      descripcionHtml:
         "<p>Perspectivas de inclusión, diseño universal para el aprendizaje y trabajo interdisciplinario.</p>",
       materiasHtml:
         "<ul><li>Psicología del Desarrollo</li><li>Trastornos del Neurodesarrollo</li><li>Didáctica de la EE</li><li>Prácticas I–IV</li></ul>",
@@ -169,101 +174,101 @@ constante DATOS_PREDETERMINADOS = {
   ],
   noticias: [
     {
-      identificación: uid(),
-      título: "Inscripciones abiertas 2026",
-      fecha: nueva Fecha().toISOString().slice(0, 10),
+      id: uid(),
+      titulo: "Inscripciones abiertas 2026",
+      fecha: new Date().toISOString().slice(0, 10),
       cuerpoHtml:
-        "<p>Se encuentran abiertas las preinscripciones para los profesorados. Consultará requisitos y cronograma.</p>",
+        "<p>Se encuentran abiertas las preinscripciones para los profesorados. Consultá requisitos y cronograma.</p>",
     },
     {
-      identificación: uid(),
-      título: "Jornada institucional",
-      fecha: nueva Fecha().toISOString().slice(0, 10),
+      id: uid(),
+      titulo: "Jornada institucional",
+      fecha: new Date().toISOString().slice(0, 10),
       cuerpoHtml:
         "<p>Convocatoria a docentes y estudiantes para la jornada de trabajo sobre mejora de prácticas.</p>",
     },
   ],
-  Formación: [
+  formacion: [
     {
-      identificación: uid(),
-      título: "Actualización en Enseñanza de la Matemática",
+      id: uid(),
+      titulo: "Actualización en Enseñanza de la Matemática",
       cuerpoHtml:
         "<p>Trayecto formativo con foco en estadística, probabilidad y tecnologías digitales aplicadas a la enseñanza.</p>",
     },
     {
-      identificación: uid(),
-      título: "Seminario de Educación Inclusiva",
+      id: uid(),
+      titulo: "Seminario de Educación Inclusiva",
       cuerpoHtml:
         "<p>Estrategias de DUA, adaptaciones curriculares y recursos accesibles para el aula.</p>",
     },
   ],
 };
 
-// --------------------- Interfaz de usuario ---------------------
-función Navbar({ ruta, setRoute, admin, onLoginToggle, onShare }) {
-  constantes tabulaciones = [
-    { id: "inicio", etiqueta: "Inicio" },
-    { id: "carreras", etiqueta: "Carreras" },
-    { id: "noticias", etiqueta: "Noticias" },
-    { id: "formación", etiqueta: "Formación" },
+// --------------------- UI ---------------------
+function Navbar({ route, setRoute, admin, onLoginToggle, onShare }) {
+  const tabs = [
+    { id: "inicio", label: "Inicio" },
+    { id: "carreras", label: "Carreras" },
+    { id: "noticias", label: "Noticias" },
+    { id: "formacion", label: "Formación" },
   ];
-  devolver (
-    <header className="pegajoso superior-0 z-40 fondo-desenfoque fondo-blanco/70 borde-b borde-gris-200">
+  return (
+    <header className="sticky top-0 z-40 backdrop-blur bg-white/70 border-b border-gray-200">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="elementos flexibles-centro espacio-3">
-          <div className="w-9 h-9 redondeado-2xl fondo degradado a br de índigo 600 a cielo 500" />
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-indigo-600 to-sky-500" />
           <div>
-            Cecilia Braslavsky, directora ejecutiva de ISFD
+            <h1 className="text-lg font-semibold leading-tight">ISFD Cecilia Braslavsky</h1>
             <p className="text-xs text-gray-500 -mt-0.5">Formación docente con sentido y calidad</p>
           </div>
         </div>
         <nav className="hidden md:flex gap-1">
           {tabs.map((t) => (
-            <botón
-              clave={t.id}
+            <button
+              key={t.id}
               onClick={() => setRoute(t.id)}
-              nombreDeClase={NombresDeClase(
-                "px-3 py-2 redondeado-xl texto-sm fuente-mediana",
-                ruta === t.id ? "bg-gray-900 texto-blanco" : "hover:bg-gray-100 texto-gris-700"
+              className={classNames(
+                "px-3 py-2 rounded-xl text-sm font-medium",
+                route === t.id ? "bg-gray-900 text-white" : "hover:bg-gray-100 text-gray-700"
               )}
             >
-              {t.etiqueta}
-            </botón>
+              {t.label}
+            </button>
           ))}
         </nav>
-        <div className="elementos flexibles-centro espacio-2">
-          Compartir
-          <botón
+        <div className="flex items-center gap-2">
+          <button onClick={onShare} className="px-3 py-1.5 rounded-xl text-sm border border-gray-300">Compartir</button>
+          <button
             onClick={onLoginToggle}
-            nombreDeClase={NombresDeClase(
-              "px-3 py-1.5 redondeado-xl texto-sm",
-              Administrador: "bg-rojo-600 texto-blanco pasar el cursor:bg-rojo-700": "bg-gris-900 texto-blanco pasar el cursor:bg-negro"
+            className={classNames(
+              "px-3 py-1.5 rounded-xl text-sm",
+              admin ? "bg-red-600 text-white hover:bg-red-700" : "bg-gray-900 text-white hover:bg-black"
             )}
           >
-            {administrador? "Salir" : "Ingresar"}
-          </botón>
-          <botón
-            className="md:hidden px-3 py-1.5 redondeado-xl texto-pequeño borde borde-gris-300"
-            al hacer clic={() => {
-              const next = Prompt("Ir a sección (inicio, carreras, noticias, formacion):", ruta);
+            {admin ? "Salir" : "Ingresar"}
+          </button>
+          <button
+            className="md:hidden px-3 py-1.5 rounded-xl text-sm border border-gray-300"
+            onClick={() => {
+              const next = prompt("Ir a sección (inicio, carreras, noticias, formacion):", route);
               if (["inicio", "carreras", "noticias", "formacion"].includes(next)) setRoute(next);
             }}
             aria-label="Cambiar sección"
           >
             Menú
-          </botón>
+          </button>
         </div>
       </div>
-    </encabezado>
+    </header>
   );
 }
 
-función Pie de página() {
-  devolver (
-    <footer className="mt-16 borde-t borde-gris-200">
-      <div className="max-w-6xl mx-auto px-4 py-8 cuadrícula md:cuadrícula-cols-3 espacio-6 texto-sm">
+function Footer() {
+  return (
+    <footer className="mt-16 border-t border-gray-200">
+      <div className="max-w-6xl mx-auto px-4 py-8 grid md:grid-cols-3 gap-6 text-sm">
         <div>
-          Cecilia Braslavsky, directora de la Fundación ISFD
+          <h4 className="font-semibold">ISFD Cecilia Braslavsky</h4>
           <p className="text-gray-600">Aristóbulo del Valle, Misiones, Argentina</p>
         </div>
         <div>
@@ -272,122 +277,122 @@ función Pie de página() {
           <p className="text-gray-600">+54 93755 659796</p>
         </div>
         <div>
-          Créditos
-          <p className="text-gray-600">Demostración del sitio, Prof. Schvartz Ivan</p>
+          <h4 className="font-semibold">Créditos</h4>
+          <p className="text-gray-600">Sitio demo, Prof. Schvartz Ivan</p>
         </div>
       </div>
-    </pie de página>
+    </footer>
   );
 }
 
-función Sección({ título, subtítulo, hijos, acciones }) {
-  devolver (
-    <sección className="max-w-6xl mx-auto px-4 mt-8">
+function Section({ title, subtitle, children, actions }) {
+  return (
+    <section className="max-w-6xl mx-auto px-4 mt-8">
       <div className="flex items-end justify-between gap-4 mb-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">{título}</h2>
-          {subtítulo && <p className="text-gray-600 text-sm mt-1">{subtítulo}</p>}
+          <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+          {subtitle && <p className="text-gray-600 text-sm mt-1">{subtitle}</p>}
         </div>
-        {comportamiento}
+        {actions}
       </div>
-      {niños}
-    </sección>
+      {children}
+    </section>
   );
 }
 
-función TextInput({ etiqueta, valor, onChange, marcador de posición, área de texto }) {
-  devolver (
-    <label className="bloque de texto-sm mb-3">
-      <span className="bloque fuente-mediana texto-gris-700 mb-1">{etiqueta}</span>
-      {área de texto ? (
-        <área de texto
+function TextInput({ label, value, onChange, placeholder, textarea }) {
+  return (
+    <label className="block text-sm mb-3">
+      <span className="block font-medium text-gray-700 mb-1">{label}</span>
+      {textarea ? (
+        <textarea
           className="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          filas={4}
-          valor={valor}
-          onChange={(e) => onChange(e.objetivo.valor)}
-          marcador de posición={marcador de posición}
+          rows={4}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
         />
       ) : (
-        <entrada
+        <input
           className="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          valor={valor}
-          onChange={(e) => onChange(e.objetivo.valor)}
-          marcador de posición={marcador de posición}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
         />
       )}
-    </etiqueta>
+    </label>
   );
 }
 
-función RichTextEditor({ etiqueta, valor, onChange, marcador de posición }) {
-  módulos constantes = {
-    barra de herramientas: [
-      [{ encabezado: [1, 2, 3, 4, 5, 6, falso] }],
-      [{ fuente: [] }],
-      [{ tamaño: ["pequeño", falso, "grande", "enorme"] }],
-      ["negrita", "cursiva", "subrayado", "tachado", { color: [] }, { fondo: [] }],
-      [{script: "sub"}, {script: "super"}],
-      [{ lista: "ordenada" }, { lista: "viñeta" }, { sangría: "-1" }, { sangría: "+1" }],
-      [{ alinear: [] }],
-      ["blockquote", "bloque de código"],
-      ["enlace", "imagen", "vídeo"],
-      ["limpio"],
+function RichTextEditor({ label, value, onChange, placeholder }) {
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+      [{ font: [] }],
+      [{ size: ["small", false, "large", "huge"] }],
+      ["bold", "italic", "underline", "strike", { color: [] }, { background: [] }],
+      [{ script: "sub" }, { script: "super" }],
+      [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
+      [{ align: [] }],
+      ["blockquote", "code-block"],
+      ["link", "image", "video"],
+      ["clean"],
     ],
-    portapapeles: {matchVisual: falso},
+    clipboard: { matchVisual: false },
   };
-  formatos constantes = [
-    Encabezado, fuente, tamaño, negrita, cursiva, subrayado, tachado, color, fondo, guion, lista, sangría, alineación, cita en bloque, bloque de código, enlace, imagen, vídeo, limpio.
+  const formats = [
+    "header","font","size","bold","italic","underline","strike","color","background","script","list","indent","align","blockquote","code-block","link","image","video","clean"
   ];
-  devolver (
-    <label className="bloque de texto-sm mb-3">
-      <span className="bloque fuente-mediana texto-gris-700 mb-1">{etiqueta}</span>
+  return (
+    <label className="block text-sm mb-3">
+      <span className="block font-medium text-gray-700 mb-1">{label}</span>
       <ReactQuill
-        valor={valor}
+        value={value}
         onChange={onChange}
-        módulos={módulos}
-        formatos={formatos}
-        tema="nieve"
-        marcador de posición={marcador de posición || "Escribí aquí..."}
+        modules={modules}
+        formats={formats}
+        theme="snow"
+        placeholder={placeholder || "Escribí aquí…"}
       />
-    </etiqueta>
+    </label>
   );
 }
 
 // --------------------- Carrusel ---------------------
-función Carrusel({ diapositivas, admin, onAdd, onUpdate, onDelete }) {
-  const[idx, setIdx] = useState(0);
-  temporizador constante = useRef(null);
+function Carousel({ slides, admin, onAdd, onUpdate, onDelete }) {
+  const [idx, setIdx] = useState(0);
+  const timer = useRef(null);
 
-  usarEfecto(() => {
-    si (!diapositivas.longitud) retorna;
-    temporizador.actual = setInterval(() => setIdx((i) => (i + 1) % diapositivas.longitud), 6000);
-    return() => clearInterval(temporizador.actual);
-  }, [diapositivas.longitud]);
+  useEffect(() => {
+    if (!slides.length) return;
+    timer.current = setInterval(() => setIdx((i) => (i + 1) % slides.length), 6000);
+    return () => clearInterval(timer.current);
+  }, [slides.length]);
 
-  constante actual = diapositivas[idx];
-  si (!actual)
-    devolver (
-      <div className="aspecto-[16/6] an-completo redondeado-2xl fondo-degradado-a-br de-gris-200 a-gris-100 cuadrícula colocar-elementos-centrar texto-centrar">
+  const current = slides[idx];
+  if (!current)
+    return (
+      <div className="aspect-[16/6] w-full rounded-2xl bg-gradient-to-br from-gray-200 to-gray-100 grid place-items-center text-center">
         <div className="p-6">
           <p className="text-lg text-gray-600">Agregá diapositivas para el inicio</p>
         </div>
       </div>
     );
 
-  devolver (
-    <div className="relativo">
-      <div className="aspecto-[16/6] w-redondeado completo-2xl desbordamiento oculto">
-        <división
-          className="w-full h-full fondo-cubierta fondo-centro"
-          estilo={{imagenDeFondo: `url(${current.imagen})` }}
-          rol="img"
+  return (
+    <div className="relative">
+      <div className="aspect-[16/6] w-full rounded-2xl overflow-hidden">
+        <div
+          className="w-full h-full bg-cover bg-center"
+          style={{ backgroundImage: `url(${current.imagen})` }}
+          role="img"
           aria-label={current.titulo}
         >
           <div className="w-full h-full bg-black/40">
             <div className="max-w-6xl mx-auto px-4 h-full flex items-center">
-              <div className="texto-blanco max-w-2xl">
-                <h3 className="text-2xl md:text-4xl font-bold drop-shadow-sm">{título actual}</h3>
-                <p className="mt-2 md:mt-3 texto-sm md:text-base texto-blanco/90">{current.texto}</p>
+              <div className="text-white max-w-2xl">
+                <h3 className="text-2xl md:text-4xl font-bold drop-shadow-sm">{current.titulo}</h3>
+                <p className="mt-2 md:mt-3 text-sm md:text-base text-white/90">{current.texto}</p>
               </div>
             </div>
           </div>
@@ -395,75 +400,75 @@ función Carrusel({ diapositivas, admin, onAdd, onUpdate, onDelete }) {
       </div>
       <div className="absolute inset-0 flex items-end justify-between p-3">
         <div className="flex gap-1">
-          {diapositivas.map((s, i) => (
-            <botón
-              clave={s.id}
-              al hacer clic={() => setIdx(i)}
-              className={classNames("w-2.5 h-2.5 redondeado-completo", i === idx ? "bg-blanco" : "bg-blanco/50")}
-              aria-label={`Ir a diapositiva ${i + 1}`}
+          {slides.map((s, i) => (
+            <button
+              key={s.id}
+              onClick={() => setIdx(i)}
+              className={classNames("w-2.5 h-2.5 rounded-full", i === idx ? "bg-white" : "bg-white/50")}
+              aria-label={`Ir a slide ${i + 1}`}
             />
           ))}
         </div>
         {admin && (
-          <CarouselEditor slides={diapositivas} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} />
+          <CarouselEditor slides={slides} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} />
         )}
       </div>
     </div>
   );
 }
 
-función CarouselEditor({ diapositivas, onAdd, onUpdate, onDelete }) {
-  const [abrir, establecerAbierto] = useState(falso);
-  const [borrador, setDraft] = useState({ titulo: "", texto: "", imagen: "" });
-  devolver (
+function CarouselEditor({ slides, onAdd, onUpdate, onDelete }) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState({ titulo: "", texto: "", imagen: "" });
+  return (
     <div>
-      <button onClick={() => setOpen((o) => !o)} className="px-3 py-1.5 redondeado-xl texto-pequeño fondo-blanco/95 pasar el cursor sobre: ​​fondo-blanco fuente-mediana">
-        {abierto ? "Cerrar edición" : "Editar carrusel"}
-      </botón>
-      {abierto && (
-        <div className="mt-3 fondo blanco/95 fondo desenfocado redondeado xl p-3 sombra">
-          <div className="cuadrícula md:cuadrícula-cols-2 espacio-3">
-            {diapositivas.mapa((s) => (
-              <div key={s.id} className="borde borde-gris-200 redondeado-xl p-3">
+      <button onClick={() => setOpen((o) => !o)} className="px-3 py-1.5 rounded-xl text-sm bg-white/95 hover:bg-white font-medium">
+        {open ? "Cerrar edición" : "Editar carrusel"}
+      </button>
+      {open && (
+        <div className="mt-3 bg-white/95 backdrop-blur rounded-xl p-3 shadow">
+          <div className="grid md:grid-cols-2 gap-3">
+            {slides.map((s) => (
+              <div key={s.id} className="border border-gray-200 rounded-xl p-3">
                 <p className="text-sm font-medium">{s.titulo}</p>
                 <p className="text-xs text-gray-500 line-clamp-2">{s.texto}</p>
                 <div className="flex gap-2 mt-2">
-                  <botón
-                    Nombre de clase="px-2 py-1 texto-xs redondeado-lg fondo-gris-900 texto-blanco"
-                    al hacer clic={() => {
-                      const titulo = Prompt("Título", s.titulo) ?? s.titulo;
-                      const texto = Prompt("Texto", s.texto) ?? s.texto;
-                      const imagen = Prompt("URL de imagen", s.imagen) ?? s.imagen;
+                  <button
+                    className="px-2 py-1 text-xs rounded-lg bg-gray-900 text-white"
+                    onClick={() => {
+                      const titulo = prompt("Título", s.titulo) ?? s.titulo;
+                      const texto = prompt("Texto", s.texto) ?? s.texto;
+                      const imagen = prompt("URL de imagen", s.imagen) ?? s.imagen;
                       onUpdate({ ...s, titulo, texto, imagen });
                     }}
                   >
                     Editar
-                  </botón>
-                  <button className="px-2 py-1 texto-xs redondeado-lg fondo-rojo-600 texto-blanco" onClick={() => onDelete(s.id)}>
+                  </button>
+                  <button className="px-2 py-1 text-xs rounded-lg bg-red-600 text-white" onClick={() => onDelete(s.id)}>
                     Eliminar
-                  </botón>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-3 borde-t borde-gris-200 pt-3">
+          <div className="mt-3 border-t border-gray-200 pt-3">
             <p className="text-sm font-medium mb-2">Agregar diapositiva</p>
-            <div className="cuadrícula md:cuadrícula-cols-3 espacio-2">
+            <div className="grid md:grid-cols-3 gap-2">
               <TextInput label="Título" value={draft.titulo} onChange={(v) => setDraft((d) => ({ ...d, titulo: v }))} placeholder="Ej.: Bienvenidos" />
               <TextInput label="Texto" value={draft.texto} onChange={(v) => setDraft((d) => ({ ...d, texto: v }))} placeholder="Subtítulo o descripción" />
-              <TextInput label="URL de la imagen" value={draft.imagen} onChange={(v) => setDraft((d) => ({ ...d, imagen: v }))} placeholder="https://..." />
+              <TextInput label="URL de imagen" value={draft.imagen} onChange={(v) => setDraft((d) => ({ ...d, imagen: v }))} placeholder="https://..." />
             </div>
             <div className="mt-2">
-              <botón
-                Nombre de clase="px-3 py-1.5 redondeado-xl texto-pequeño fondo-índigo-600 texto-blanco"
-                al hacer clic={() => {
+              <button
+                className="px-3 py-1.5 rounded-xl text-sm bg-indigo-600 text-white"
+                onClick={() => {
                   if (!draft.titulo || !draft.imagen) return alert("Completá título e imagen");
-                  onAdd({ id: uid(), ...borrador });
-                  setDraft({ título: "", texto: "", imagen: "" });
+                  onAdd({ id: uid(), ...draft });
+                  setDraft({ titulo: "", texto: "", imagen: "" });
                 }}
               >
                 Agregar
-              </botón>
+              </button>
             </div>
           </div>
         </div>
@@ -474,58 +479,58 @@ función CarouselEditor({ diapositivas, onAdd, onUpdate, onDelete }) {
 
 // --------------------- Carreras ---------------------
 function CarrerasGrid({ carreras, onOpen }) {
-  devolver (
-    <div className="cuadrícula pequeña: cuadrícula-columnas-2 grande: cuadrícula-columnas-3 espacio-4">
+  return (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {carreras.map((c) => (
-        <botón
-          clave={c.id}
-          al hacer clic={() => al abrir(c.id)}
-          Nombre de clase="texto-izquierdo, borde de grupo, borde-gris-200, redondeado-2xl, desbordamiento-oculto, pasar el cursor: sombra-md, transición-sombra, fondo-blanco"
+        <button
+          key={c.id}
+          onClick={() => onOpen(c.id)}
+          className="text-left group border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow bg-white"
         >
-          <div className="h-36 fondo-cubierta fondo-centro" estilo={{ backgroundImage: `url(${c.imagen})` }} aria-hidden />
+          <div className="h-36 bg-cover bg-center" style={{ backgroundImage: `url(${c.imagen})` }} aria-hidden />
           <div className="p-4">
-            <div className="elementos flexibles-centro espacio-2 mb-1">
-              <span className={classNames("bloque en línea w-2 h-2 redondeado completo bg-gradient-to-br", c.color)} />
+            <div className="flex items-center gap-2 mb-1">
+              <span className={classNames("inline-block w-2 h-2 rounded-full bg-gradient-to-br", c.color)} />
               <h3 className="font-semibold group-hover:underline">{c.nombre}</h3>
             </div>
             <div className="text-sm text-gray-600 line-clamp-2" dangerouslySetInnerHTML={{ __html: c.descripcionHtml }} />
           </div>
-        </botón>
+        </button>
       ))}
     </div>
   );
 }
 
 function CarreraDetalle({ carrera, admin, onClose, onSave, onDelete }) {
-  const [borrador, setDraft] = useState(carrera);
+  const [draft, setDraft] = useState(carrera);
   useEffect(() => setDraft(carrera), [carrera?.id]);
-  si (!carrera) devuelve nulo;
+  if (!carrera) return null;
 
-  devolver (
-    <div className="inserción fija-0 z-50 fondo negro/40 desenfoque de fondo p-4 desbordamiento automático">
-      <div className="max-w-3xl mx-auto bg-blanco redondeado-2xl desbordamiento-sombra oculta-lg">
-        <div className="relativo h-44">
-          <img src={borrador.imagen} alt={borrador.nombre} className="w-full h-full object-cover" />
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur p-4 overflow-auto">
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl overflow-hidden shadow-lg">
+        <div className="relative h-44">
+          <img src={draft.imagen} alt={draft.nombre} className="w-full h-full object-cover" />
           <button onClick={onClose} className="absolute top-3 right-3 bg-black/60 text-white px-3 py-1.5 rounded-xl text-sm">Cerrar</button>
         </div>
         <div className="p-4 md:p-6">
           {admin ? (
             <>
               <TextInput label="Nombre" value={draft.nombre} onChange={(v) => setDraft((d) => ({ ...d, nombre: v }))} />
-              <RichTextEditor label="Descripción" value={draft.descripcionHtml || ""} onChange={(v) => setDraft((d) => ({ ...d, descripcionHtml:v }))} />
+              <RichTextEditor label="Descripción" value={draft.descripcionHtml || ""} onChange={(v) => setDraft((d) => ({ ...d, descripcionHtml: v }))} />
               <RichTextEditor label="Materias (formato libre)" value={draft.materiasHtml || ""} onChange={(v) => setDraft((d) => ({ ...d, materiasHtml: v }))} />
               <TextInput label="URL de imagen" value={draft.imagen} onChange={(v) => setDraft((d) => ({ ...d, imagen: v }))} />
-              <div className="elementos flexibles-centro espacio-2 mt-2">
-                Guardar cambios
-                Eliminar carrera
+              <div className="flex items-center gap-2 mt-2">
+                <button className="px-3 py-1.5 rounded-xl text-sm bg-indigo-600 text-white" onClick={() => onSave(draft)}>Guardar cambios</button>
+                <button className="px-3 py-1.5 rounded-xl text-sm bg-red-600 text-white" onClick={() => onDelete(draft.id)}>Eliminar carrera</button>
               </div>
             </>
           ) : (
             <>
-              <h3 className="text-xl font-bold mb-1">{borrador.nombre}</h3>
-              <div className="prosa max-w-none" dangerouslySetInnerHTML={{ __html: borrador.descripcionHtml || "" }} />
-              <h4 className="font-semibold mt-3">Materiales destacados</h4>
-              <div className="prosa max-w-none mt-1" dangerouslySetInnerHTML={{ __html: borrador.materiasHtml || "" }} />
+              <h3 className="text-xl font-bold mb-1">{draft.nombre}</h3>
+              <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: draft.descripcionHtml || "" }} />
+              <h4 className="font-semibold mt-3">Materias destacadas</h4>
+              <div className="prose max-w-none mt-1" dangerouslySetInnerHTML={{ __html: draft.materiasHtml || "" }} />
             </>
           )}
         </div>
@@ -535,15 +540,15 @@ function CarreraDetalle({ carrera, admin, onClose, onSave, onDelete }) {
 }
 
 // --------------------- Noticias y Formación ---------------------
-función ItemsEditor({ items, admin, title, onAdd, onUpdate, onDelete }) {
-  const [abrir, establecerAbierto] = useState(falso);
-  const [borrador, setDraft] = useState({ titulo: "", cuerpoHtml: "" });
+function ItemsEditor({ items, admin, title, onAdd, onUpdate, onDelete }) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState({ titulo: "", cuerpoHtml: "" });
 
-  devolver (
+  return (
     <div>
-      <div className="cuadrícula md:cuadrícula-cols-2 espacio-4">
-        {elementos.map((n) => (
-          <div key={n.id} className="borde borde-gris-200 redondeado-2xl p-4 fondo-blanco">
+      <div className="grid md:grid-cols-2 gap-4">
+        {items.map((n) => (
+          <div key={n.id} className="border border-gray-200 rounded-2xl p-4 bg-white">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <h3 className="font-semibold">{n.titulo}</h3>
@@ -551,46 +556,46 @@ función ItemsEditor({ items, admin, title, onAdd, onUpdate, onDelete }) {
               </div>
               {admin && (
                 <div className="flex gap-2">
-                  <botón
-                    Nombre de clase="px-2 py-1 texto-xs redondeado-lg fondo-gris-900 texto-blanco"
-                    al hacer clic={() => {
-                      const titulo = Prompt("Título", n.titulo) ?? n.titulo;
-                      onUpdate({ ...n, título });
+                  <button
+                    className="px-2 py-1 text-xs rounded-lg bg-gray-900 text-white"
+                    onClick={() => {
+                      const titulo = prompt("Título", n.titulo) ?? n.titulo;
+                      onUpdate({ ...n, titulo });
                     }}
                   >
                     Renombrar
-                  </botón>
-                  <button className="px-2 py-1 texto-xs redondeado-lg fondo-rojo-600 texto-blanco" onClick={() => onDelete(n.id)}>
+                  </button>
+                  <button className="px-2 py-1 text-xs rounded-lg bg-red-600 text-white" onClick={() => onDelete(n.id)}>
                     Eliminar
-                  </botón>
+                  </button>
                 </div>
               )}
             </div>
-            <div className="prosa max-w-none mt-1" dangerouslySetInnerHTML={{ __html: n.cuerpoHtml || "" }} />
+            <div className="prose max-w-none mt-1" dangerouslySetInnerHTML={{ __html: n.cuerpoHtml || "" }} />
           </div>
         ))}
       </div>
 
       {admin && (
         <div className="mt-4">
-          <button onClick={() => setOpen((o) => !o)} className="px-3 py-1.5 redondeado-xl texto-sm bg-gris-900 texto-blanco">
-            {abierto ? `Cerrar ${title}` : `Agregar a ${title}`}
-          </botón>
-          {abierto && (
-            <div className="mt-3 espacio en la cuadrícula-3">
+          <button onClick={() => setOpen((o) => !o)} className="px-3 py-1.5 rounded-xl text-sm bg-gray-900 text-white">
+            {open ? `Cerrar ${title}` : `Agregar a ${title}`}
+          </button>
+          {open && (
+            <div className="mt-3 grid gap-3">
               <TextInput label="Título" value={draft.titulo} onChange={(v) => setDraft((d) => ({ ...d, titulo: v }))} />
               <RichTextEditor label="Contenido" value={draft.cuerpoHtml} onChange={(v) => setDraft((d) => ({ ...d, cuerpoHtml: v }))} />
               <div>
-                <botón
-                  Nombre de clase="px-3 py-1.5 redondeado-xl texto-pequeño fondo-índigo-600 texto-blanco"
-                  al hacer clic={() => {
+                <button
+                  className="px-3 py-1.5 rounded-xl text-sm bg-indigo-600 text-white"
+                  onClick={() => {
                     if (!draft.titulo) return alert("Completá el título");
                     onAdd({ id: uid(), ...draft, fecha: new Date().toISOString().slice(0, 10) });
                     setDraft({ titulo: "", cuerpoHtml: "" });
                   }}
                 >
                   Agregar
-                </botón>
+                </button>
               </div>
             </div>
           )}
@@ -601,103 +606,103 @@ función ItemsEditor({ items, admin, title, onAdd, onUpdate, onDelete }) {
 }
 
 // --------------------- Compartir flotante ---------------------
-función ShareFab({ datos }) {
-  si (!data) devuelve nulo;
-  constante onClick = async () => {
-    const url = makeShareUrl(datos);
-    intentar {
-      si (navegador.compartir) {
-        await navigator.share({ título: "ISFD Cecilia Braslavsky", texto: "Mirá el estado del sitio", url });
-      } demás {
-        esperar navigator.clipboard?.writeText(url);
+function ShareFab({ data }) {
+  if (!data) return null;
+  const onClick = async () => {
+    const url = makeShareUrl(data);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "ISFD Cecilia Braslavsky", text: "Mirá el estado del sitio", url });
+      } else {
+        await navigator.clipboard?.writeText(url);
         alert("Enlace copiado al portapapeles");
       }
-    } atrapar {
-      esperar navigator.clipboard?.writeText(url);
+    } catch {
+      await navigator.clipboard?.writeText(url);
       alert("Enlace copiado al portapapeles");
     }
   };
-  devolver (
-    <button onClick={onClick} className="fijo inferior-4 derecha-4 z-40 px-4 py-3 redondeado-2xl sombra-lg fondo-gris-900 texto-blanco texto-pequeño" aria-label="Compartir" title="Compartir">
+  return (
+    <button onClick={onClick} className="fixed bottom-4 right-4 z-40 px-4 py-3 rounded-2xl shadow-lg bg-gray-900 text-white text-sm" aria-label="Compartir" title="Compartir">
       Compartir
-    </botón>
+    </button>
   );
 }
 
-// --------------------- Administrador / Copia de seguridad ---------------------
-función AdminBar({ datos, setData, onRestore, onShareUrl }) {
-  const [abrir, establecerAbierto] = useState(falso);
-  const jsonText = useMemo(() => JSON.stringify(datos, null, 2), [datos]);
+// --------------------- Admin / Backup ---------------------
+function AdminBar({ data, setData, onRestore, onShareUrl }) {
+  const [open, setOpen] = useState(false);
+  const jsonText = useMemo(() => JSON.stringify(data, null, 2), [data]);
   const [importText, setImportText] = useState("");
   const [shareUrl, setShareUrl] = useState("");
 
-  devolver (
+  return (
     <div className="mt-4">
-      <button onClick={() => setOpen((o) => !o)} className="px-3 py-1.5 redondeado-xl texto-pequeño fondo-amarillo-400 hover: fondo-amarillo-500 fuente-mediana">
-        {abierto ? "Ocultar herramientas" : "Herramientas (exportar/importar)"}
-      </botón>
-      {abierto && (
-        <div className="mt-3 cuadrícula md:grid-cols-2 espacio-4">
+      <button onClick={() => setOpen((o) => !o)} className="px-3 py-1.5 rounded-xl text-sm bg-yellow-400 hover:bg-yellow-500 font-medium">
+        {open ? "Ocultar herramientas" : "Herramientas (exportar/importar)"}
+      </button>
+      {open && (
+        <div className="mt-3 grid md:grid-cols-2 gap-4">
           <div>
             <p className="text-sm font-semibold mb-1">Exportar contenido</p>
             <textarea className="w-full h-48 rounded-xl border border-gray-300 px-3 py-2 text-xs" readOnly value={jsonText} />
             <div className="flex flex-wrap gap-2 mt-2">
-              <botón
-                Nombre de clase="px-3 py-1.5 redondeado-xl texto-pequeño borde borde-gris-300"
-                al hacer clic={() => {
-                  intentar {
-                    const blob = new Blob([jsonText], { tipo: "application/json" });
-                    constante url = URL.createObjectURL(blob);
+              <button
+                className="px-3 py-1.5 rounded-xl text-sm border border-gray-300"
+                onClick={() => {
+                  try {
+                    const blob = new Blob([jsonText], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
                     a.href = url;
                     a.download = "isfd_braslavsky_contenido.json";
-                    documento.cuerpo.appendChild(a);
+                    document.body.appendChild(a);
                     a.click();
-                    a.eliminar();
+                    a.remove();
                     URL.revokeObjectURL(url);
-                  } atrapar {}
+                  } catch {}
                 }}
               >
                 Descargar JSON
-              </botón>
+              </button>
             </div>
           </div>
           <div>
             <p className="text-sm font-semibold mb-1">Importar contenido</p>
             <textarea className="w-full h-48 rounded-xl border border-gray-300 px-3 py-2 text-xs" value={importText} onChange={(e) => setImportText(e.target.value)} placeholder="Pegá aquí el JSON exportado y presioná Importar" />
             <div className="flex flex-wrap gap-2 mt-2">
-              <botón
-                Nombre de clase="px-3 py-1.5 redondeado-xl texto-pequeño fondo-índigo-600 texto-blanco"
-                al hacer clic={() => {
-                  intentar {
-                    constante obj = JSON.parse(importText);
-                    establecerDatos(obj);
-                    alerta("Contenido importado");
-                  } atrapar {
+              <button
+                className="px-3 py-1.5 rounded-xl text-sm bg-indigo-600 text-white"
+                onClick={() => {
+                  try {
+                    const obj = JSON.parse(importText);
+                    setData(obj);
+                    alert("Contenido importado");
+                  } catch {
                     alert("JSON inválido");
                   }
                 }}
               >
                 Importar
-              </botón>
-              Restaurar por defecto
+              </button>
+              <button className="px-3 py-1.5 rounded-xl text-sm bg-red-600 text-white" onClick={onRestore}>Restaurar por defecto</button>
             </div>
             <div className="mt-4 border-t border-gray-200 pt-3">
               <p className="text-sm font-semibold mb-1">Compartir como enlace</p>
               <div className="flex gap-2 flex-wrap">
-                <botón
-                  Nombre de clase="px-3 py-1.5 redondeado-xl texto-pequeño borde borde-gris-300"
-                  al hacer clic={() => {
-                    const url = makeShareUrl(datos);
+                <button
+                  className="px-3 py-1.5 rounded-xl text-sm border border-gray-300"
+                  onClick={() => {
+                    const url = makeShareUrl(data);
                     setShareUrl(url);
-                    enShareUrl?.(url);
-                    navegador.clipboard?.writeText(url);
+                    onShareUrl?.(url);
+                    navigator.clipboard?.writeText(url);
                     alert("Enlace generado y copiado al portapapeles");
                   }}
                 >
                   Generar enlace
-                </botón>
-                <input className="flex-1 min-w-[200px] rounded-xl border border-gray-300 px-3 py-2 text-xs" value={shareUrl} readOnly placeholder="Presioná 'Generar enlace' para obtener una URL compatible" />
+                </button>
+                <input className="flex-1 min-w-[200px] rounded-xl border border-gray-300 px-3 py-2 text-xs" value={shareUrl} readOnly placeholder="Presioná 'Generar enlace' para obtener una URL compartible" />
               </div>
               <p className="text-xs text-gray-500 mt-1">El enlace incluye el contenido actual embebido en la URL. Ideal para compartir un estado puntual del sitio.</p>
             </div>
@@ -708,82 +713,82 @@ función AdminBar({ datos, setData, onRestore, onShareUrl }) {
   );
 }
 
-función LoginModal({ onClose, onOk }) {
+function LoginModal({ onClose, onOk }) {
   const [pwd, setPwd] = useState("");
-  const [mostrar, establecerMostrar] = useState(true);
-  si (!mostrar) devuelve nulo;
-  devolver (
-    <div className="recuadro fijo 0 z-50 fondo negro/40 fondo desenfocado cuadrícula colocar elementos centrados p-4">
-      <div className="bg-blanco redondeado-2xl w-full máx.-w-pequeño p-5 shadow-lg">
+  const [show, setShow] = useState(true);
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur grid place-items-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-sm p-5 shadow-lg">
         <h3 className="text-lg font-semibold">Ingresar al modo edición</h3>
         <p className="text-sm text-gray-600 mt-1">Clave de demostración: <code>braslavsky</code></p>
         <TextInput label="Clave" value={pwd} onChange={setPwd} placeholder="Ingresá la clave" />
         <div className="flex items-center justify-end gap-2">
-          Cancelar
-          <botón
-            Nombre de clase="px-3 py-1.5 redondeado-xl texto-pequeño fondo gris-900 texto-blanco"
-            al hacer clic={() => {
+          <button className="px-3 py-1.5 rounded-xl text-sm border border-gray-300" onClick={() => { setShow(false); onClose(); }}>Cancelar</button>
+          <button
+            className="px-3 py-1.5 rounded-xl text-sm bg-gray-900 text-white"
+            onClick={() => {
               if (pwd.trim() === "braslavsky") { onOk(); setShow(false); onClose(); } else alert("Clave incorrecta");
             }}
           >
             Ingresar
-          </botón>
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// --------------------- Aplicación ---------------------
-exportar función predeterminada App() {
-  const [datos, setData] = useLocalStorage(CLAVE_ALMACENAMIENTO, DATOS_PREDETERMINADOS);
-  const [ruta, setRoute] = useState("inicio");
-  constante [admin, setAdmin] = useState(() => localStorage.getItem(ADMIN_KEY) === "1");
-  const [mostrarInicioDeSesión, establecerMostrarInicioDeSesión] = useState(false);
-  const [detalleId, setDetalleId] = useState(nulo);
+// --------------------- App ---------------------
+export default function App() {
+  const [data, setData] = useLocalStorage(STORAGE_KEY, DEFAULT_DATA);
+  const [route, setRoute] = useState("inicio");
+  const [admin, setAdmin] = useState(() => localStorage.getItem(ADMIN_KEY) === "1");
+  const [showLogin, setShowLogin] = useState(false);
+  const [detalleId, setDetalleId] = useState(null);
 
-  usarEfecto(() => {
-    prueba { localStorage.setItem(ADMIN_KEY, admin ? "1" : "0"); } captura {}
+  useEffect(() => {
+    try { localStorage.setItem(ADMIN_KEY, admin ? "1" : "0"); } catch {}
   }, [admin]);
 
   // Importar estado compartido por URL
-  usarEfecto(() => {
-    const params = new URLSearchParams(ventana.ubicación.búsqueda);
-    const codificado = params.get("datos");
-    si (codificado) {
-      const obj = decodeFromUrlParam(codificado);
-      si (obj) {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get("data");
+    if (encoded) {
+      const obj = decodeFromUrlParam(encoded);
+      if (obj) {
         const ok = confirm("Se detectó un contenido compartido por enlace. ¿Cargarlo ahora? (Reemplaza el contenido actual)");
-        si (ok) {
-          establecerDatos(obj);
-          const base = ventana.ubicación.origen + ventana.ubicación.ruta;
-          ventana.history.replaceState({}, "", base);
+        if (ok) {
+          setData(obj);
+          const base = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, "", base);
         }
       }
     }
   }, []);
 
   const openCarrera = (id) => setDetalleId(id);
-  const currentCarrera = data.carreras.find((c) => c.id === detalleId) || nulo;
+  const currentCarrera = data.carreras.find((c) => c.id === detalleId) || null;
 
-  devolver (
+  return (
     <div className="min-h-dvh bg-gray-50 text-gray-900">
-      <Barra de navegación
-        ruta={ruta}
-        establecerRuta={establecerRuta}
-        administrador={admin}
-        onLoginToggle={() => { if (admin) setAdmin(false); de lo contrario setShowLogin(true); }}
-        onShare={async() => {
-          const url = makeShareUrl(datos);
-          intentar {
-            si (navegador.compartir) {
-              await navigator.share({ título: "ISFD Cecilia Braslavsky", texto: "Mirá el estado del sitio", url });
-            } demás {
-              esperar navigator.clipboard?.writeText(url);
+      <Navbar
+        route={route}
+        setRoute={setRoute}
+        admin={admin}
+        onLoginToggle={() => { if (admin) setAdmin(false); else setShowLogin(true); }}
+        onShare={async () => {
+          const url = makeShareUrl(data);
+          try {
+            if (navigator.share) {
+              await navigator.share({ title: "ISFD Cecilia Braslavsky", text: "Mirá el estado del sitio", url });
+            } else {
+              await navigator.clipboard?.writeText(url);
               alert("Enlace copiado al portapapeles");
             }
-          } atrapar {
-            esperar navigator.clipboard?.writeText(url);
+          } catch {
+            await navigator.clipboard?.writeText(url);
             alert("No se pudo abrir el diálogo nativo. Enlace copiado al portapapeles.");
           }
         }}
@@ -792,54 +797,54 @@ exportar función predeterminada App() {
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} onOk={() => setAdmin(true)} />}
 
       {/* INICIO */}
-      {ruta === "inicio" && (
-        <nombre de clase principal="max-w-6xl mx-auto px-4 mt-6">
-          <Carrusel
-            diapositivas={datos.diapositivas}
-            administrador={admin}
-            onAdd={(s) => setData({ ...datos, diapositivas: [...datos.diapositivas, s] })}
-            onUpdate={(s) => setData({ ...datos, diapositivas: datos.diapositivas.mapa((x) => (x.id === s.id ? s : x)) })}
-            onDelete={(id) => setData({ ...datos, diapositivas: datos.diapositivas.filter((x) => x.id !== id) })}
+      {route === "inicio" && (
+        <main className="max-w-6xl mx-auto px-4 mt-6">
+          <Carousel
+            slides={data.slides}
+            admin={admin}
+            onAdd={(s) => setData({ ...data, slides: [...data.slides, s] })}
+            onUpdate={(s) => setData({ ...data, slides: data.slides.map((x) => (x.id === s.id ? s : x)) })}
+            onDelete={(id) => setData({ ...data, slides: data.slides.filter((x) => x.id !== id) })}
           />
           <Section title="Nuestra propuesta" subtitle="Prácticas en territorio, actualización permanente y enfoque interdisciplinario.">
-            <div className="cuadrícula md:cuadrícula-cols-3 espacio-4">
+            <div className="grid md:grid-cols-3 gap-4">
               {[
                 { t: "Prácticas y residencias", d: "Acompañamiento situado, articulación con escuelas y evaluación formativa." },
                 { t: "Tecnologías para enseñar", d: "Integración de recursos digitales, accesibilidad y producción multimedia." },
                 { t: "Vinculación", d: "Trabajo con la comunidad y proyectos regionales." },
               ].map((x, i) => (
-                <div key={i} className="bg-blanco redondeado-2xl p-4 borde borde-gris-200">
-                  <h3 className="font-semibold">{xt}</h3>
-                  <p className="text-gray-700 mt-1 text-sm">{xd}</p>
+                <div key={i} className="bg-white rounded-2xl p-4 border border-gray-200">
+                  <h3 className="font-semibold">{x.t}</h3>
+                  <p className="text-gray-700 mt-1 text-sm">{x.d}</p>
                 </div>
               ))}
             </div>
-          </Sección>
-        </principal>
+          </Section>
+        </main>
       )}
 
       {/* CARRERAS */}
-      {ruta === "carreras" && (
-        <Sección
+      {route === "carreras" && (
+        <Section
           title="Carreras del instituto"
           subtitle="Hacé clic en una carrera para ver el detalle (o editar si estás en modo edición)."
-          acciones={
-            administrador && (
+          actions={
+            admin && (
               <div className="flex gap-2">
-                <botón
-                  Nombre de clase="px-3 py-1.5 redondeado-xl texto-pequeño fondo-índigo-600 texto-blanco"
-                  al hacer clic={() => {
-                    const nombre = Prompt("Nombre de la carrera");
-                    si (!nombre) retorna;
-                    const imagen = Prompt("URL de imagen", "https://images.unsplash.com/photo-1529101091764-c3526daf38fe?w=1600&q=80&auto=format&fit=crop") || "";
-                    establecerDatos({
-                      ...datos,
+                <button
+                  className="px-3 py-1.5 rounded-xl text-sm bg-indigo-600 text-white"
+                  onClick={() => {
+                    const nombre = prompt("Nombre de la carrera");
+                    if (!nombre) return;
+                    const imagen = prompt("URL de imagen", "https://images.unsplash.com/photo-1529101091764-c3526daf38fe?w=1600&q=80&auto=format&fit=crop") || "";
+                    setData({
+                      ...data,
                       carreras: [
-                        ...datos.carreras,
+                        ...data.carreras,
                         {
-                          identificación: uid(),
+                          id: uid(),
                           nombre,
-                          color: "del índigo 500 al cielo 500",
+                          color: "from-indigo-500 to-sky-500",
                           descripcionHtml: "<p>Descripción de la carrera…</p>",
                           materiasHtml: "<ul><li>Materia 1</li><li>Materia 2</li></ul>",
                           imagen,
@@ -849,72 +854,72 @@ exportar función predeterminada App() {
                   }}
                 >
                   Agregar carrera
-                </botón>
-                <button className="px-3 py-1.5 redondeado-xl texto-sm borde borde-gris-300" onClick={() => setRoute("inicio")}>
+                </button>
+                <button className="px-3 py-1.5 rounded-xl text-sm border border-gray-300" onClick={() => setRoute("inicio")}>
                   Ir a Inicio
-                </botón>
+                </button>
               </div>
             )
           }
         >
           <CarrerasGrid carreras={data.carreras} onOpen={(id) => setDetalleId(id)} />
-          {carreraactual && (
-            <Detalles de la carrera
-              carrera={carreraactual}
-              administrador={admin}
-              al cerrar={() => setDetalleId(null)}
-              onSave={(borrador) => {
+          {currentCarrera && (
+            <CarreraDetalle
+              carrera={currentCarrera}
+              admin={admin}
+              onClose={() => setDetalleId(null)}
+              onSave={(draft) => {
                 setData({ ...data, carreras: data.carreras.map((c) => (c.id === draft.id ? draft : c)) });
                 alert("Cambios guardados");
               }}
-              al eliminar={(id) => {
+              onDelete={(id) => {
                 if (!confirm("¿Eliminar la carrera?")) return;
-                setDetalleId(nulo);
+                setDetalleId(null);
                 setData({ ...data, carreras: data.carreras.filter((c) => c.id !== id) });
               }}
             />
           )}
-        </Sección>
+        </Section>
       )}
 
-      {/*NOTICIAS*/}
-      {ruta === "noticias" && (
+      {/* NOTICIAS */}
+      {route === "noticias" && (
         <Section title="Noticias" subtitle="Novedades institucionales">
-          <Editor de artículos
-            items={datos.noticias}
-            administrador={admin}
-            título="Noticias"
-            onAdd={(n) => setData({ ...datos, noticias: [n, ...datos.noticias] })}
+          <ItemsEditor
+            items={data.noticias}
+            admin={admin}
+            title="Noticias"
+            onAdd={(n) => setData({ ...data, noticias: [n, ...data.noticias] })}
             onUpdate={(n) => setData({ ...data, noticias: data.noticias.map((x) => (x.id === n.id ? n : x)) })}
             onDelete={(id) => setData({ ...data, noticias: data.noticias.filter((x) => x.id !== id) })}
           />
-        </Sección>
+        </Section>
       )}
 
-      {/*FORMACIÓN CONTINUA*/}
-      {ruta === "formación" && (
-        <Sección
-          título="Formación continua"
-          subtitle="Trayectos, cursos y post-títulos"
-          acciones={
-            administrador && (
-              <AdminBar datos={datos} establecerDatos={establecerDatos} onRestore={() => establecerDatos(DATOS_POR_DEFECTO)} onShareUrl={() => {}} />
+      {/* FORMACIÓN CONTINUA */}
+      {route === "formacion" && (
+        <Section
+          title="Formación continua"
+          subtitle="Trayectos, cursos y pos-títulos"
+          actions={
+            admin && (
+              <AdminBar data={data} setData={setData} onRestore={() => setData(DEFAULT_DATA)} onShareUrl={() => {}} />
             )
           }
         >
-          <Editor de artículos
+          <ItemsEditor
             items={data.formacion}
-            administrador={admin}
-            título="Formación"
-            onAdd={(n) => setData({ ...datos, formacion: [n, ...datos.formacion] })}
+            admin={admin}
+            title="Formación"
+            onAdd={(n) => setData({ ...data, formacion: [n, ...data.formacion] })}
             onUpdate={(n) => setData({ ...data, formacion: data.formacion.map((x) => (x.id === n.id ? n : x)) })}
-            onDelete={(id) => setData({ ...datos, formacion: data.formacion.filter((x) => x.id !== id) })}
+            onDelete={(id) => setData({ ...data, formacion: data.formacion.filter((x) => x.id !== id) })}
           />
-        </Sección>
+        </Section>
       )}
 
-      <ShareFab data={datos} />
-      <Pie de página />
+      <ShareFab data={data} />
+      <Footer />
     </div>
   );
 }
