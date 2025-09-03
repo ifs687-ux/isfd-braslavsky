@@ -1,9 +1,6 @@
+import React, { useState } from 'react'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-importar React, { useEffect, useMemo, useRef, useState } de "react";
-importar ReactQuill desde "react-quill";
-importar "react-quill/dist/quill.snow.css";
-
 /**
  * ISFD Cecilia Braslavsky — Sitio institucional (versión estable)
  * ---------------------------------------------------------------
